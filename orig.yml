@@ -1,38 +1,27 @@
-font:
-  normal:
-    family: IBM Plex Mono
-  size: 21
-
-window:
-  dimensions:
-    columns: 100
-    lines: 30
-
-# Colors (Monokai Soda)
 colors:
   # Default colors
   primary:
-    background: '#1a1a1a'
-    foreground: '#c4c5b5'
+    background: '#000000'
+    foreground: '#dddddd'
 
   # Normal colors
   normal:
-    black:   '#1a1a1a'
-    red:     '#f4005f'
-    green:   '#98e024'
-    yellow:  '#fa8419'
-    blue:    '#9d65ff'
-    magenta: '#f4005f'
-    cyan:    '#58d1eb'
-    white:   '#c4c5b5'
+    black:   '#000000'
+    red:     '#cc0403'
+    green:   '#19cb00'
+    yellow:  '#cecb00'
+    blue:    '#0d73cc'
+    magenta: '#cb1ed1'
+    cyan:    '#0dcdcd'
+    white:   '#dddddd'
 
   # Bright colors
   bright:
-    black:   '#625e4c'
-    red:     '#f4005f'
-    green:   '#98e024'
-    yellow:  '#e0d561'
-    blue:    '#9d65ff'
-    magenta: '#f4005f'
-    cyan:    '#58d1eb'
-    white:   '#f6f6ef'
+    black:   '#767676'
+    red:     '#f2201f'
+    green:   '#23fd00'
+    yellow:  '#fffd00'
+    blue:    '#1a8fff'
+    magenta: '#fd28ff'
+    cyan:    '#14ffff'
+    white:   '#ffffff'
