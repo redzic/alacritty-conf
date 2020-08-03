@@ -114,12 +114,12 @@ colors:
 /// implemented.
 pub fn parse(source: &str) -> Option<PartialConfig> {
     let parsed = YamlLoader::load_from_str(source).ok()?;
-    let parsed_ref = parsed.get(0)?;
+    let parsed = parsed.get(0)?;
 
     Some(PartialConfig {
         font: Some(Font::new(
-            parsed_ref["font"]["normal"]["family"].as_str(),
-            parsed_ref["font"]["size"]
+            parsed["font"]["normal"]["family"].as_str(),
+            parsed["font"]["size"]
                 .as_i64()
                 // TODO handle error
                 .map(|x| FontSize(x as u16))
@@ -129,10 +129,10 @@ pub fn parse(source: &str) -> Option<PartialConfig> {
         // TODO actually parse the theme
         theme: None,
         dimensions: Some(Window::new_or_default(
-            parsed_ref["window"]["dimensions"]["columns"]
+            parsed["window"]["dimensions"]["columns"]
                 .as_i64()
                 .map(|x| x as u16),
-            parsed_ref["window"]["dimensions"]["lines"]
+            parsed["window"]["dimensions"]["lines"]
                 .as_i64()
                 // TODO add error handling if it doesn't fit in a u16
                 .map(|x| x as u16),
