@@ -1,17 +1,25 @@
-#![warn(clippy::all, clippy::pedantic, clippy::nursery)]
+#![warn(clippy::all)]
 #![allow(clippy::missing_docs_in_private_items)]
 #![feature(const_option)]
 
 mod config;
+mod event;
 mod theme;
 
 use crate::config::{Config, PartialConfig};
+use crate::event::{Event, Events};
 use crate::theme::{ColorTheme, Font, FontSize, Invert, Theme, Window};
 use std::fs::{self, File};
 use std::io::{self, Write};
 use structopt::clap::AppSettings::ColoredHelp;
 use structopt::StructOpt;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+
+use termion::raw::IntoRawMode;
+use tui::backend::TermionBackend;
+use tui::layout::{Constraint, Direction, Layout};
+use tui::widgets::{Block, Borders, Widget};
+use tui::Terminal;
 
 #[derive(Debug, StructOpt)]
 #[structopt(setting = ColoredHelp)]
@@ -40,22 +48,27 @@ struct Args {
     /// Dimensions of window size
     #[structopt(long, short, default_value = "80x25")]
     dimensions: Window,
+
+    /// Launch in TUI mode
+    #[structopt(long)]
+    tui: bool,
+}
+
+// App state
+struct App {
+    mode: bool,
 }
 
 fn main() -> Result<(), io::Error> {
     let args = Args::from_args();
 
-    // TODO add information at the beginning of files
-    // so that it can detect if the config file was originally
-    // made by this program and use that to keep settings
-    // not specified there
-
-    let mut stdout = StandardStream::stdout(ColorChoice::Always);
-    let mut stderr = StandardStream::stderr(ColorChoice::Always);
+    // termcolor stdout/stderr
+    let mut tc_stdout = StandardStream::stdout(ColorChoice::Always);
+    let mut tc_stderr = StandardStream::stderr(ColorChoice::Always);
 
     if args.list_themes {
         writeln!(
-            stdout,
+            tc_stdout,
             "\
 afterglow
 argonaut
@@ -70,12 +83,13 @@ material
 monokai-soda"
         )?;
 
-        stdout.flush()?;
+        tc_stdout.flush()?;
 
         return Ok(());
     }
 
-    // TODO do not crash if none is specified, just get the default one instead
+    // TODO do not error out if none is specified, just get the default one instead
+    // and eventually correctly parse existing themes
     let theme = if let Some(theme_preset) = args.theme {
         let mut theme = Theme::from(theme_preset);
 
@@ -85,27 +99,27 @@ monokai-soda"
 
         theme
     } else {
-        stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red)).set_bold(true))?;
-        write!(stderr, "error:")?;
-        stderr.reset()?;
-        write!(stderr, " You must provide a value for '")?;
-        stderr.set_color(ColorSpec::new().set_fg(Some(Color::Yellow)))?;
-        write!(stderr, "<theme>")?;
-        stderr.reset()?;
+        tc_stderr.set_color(ColorSpec::new().set_fg(Some(Color::Red)).set_bold(true))?;
+        write!(tc_stderr, "error:")?;
+        tc_stderr.reset()?;
+        write!(tc_stderr, " You must provide a value for '")?;
+        tc_stderr.set_color(ColorSpec::new().set_fg(Some(Color::Yellow)))?;
+        write!(tc_stderr, "<theme>")?;
+        tc_stderr.reset()?;
 
-        write!(stderr, "'\nUse ")?;
-        stderr.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
-        write!(stderr, "-l")?;
-        stderr.reset()?;
-        write!(stderr, "/")?;
-        stderr.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
-        write!(stderr, "--list-themes")?;
-        stderr.reset()?;
-        writeln!(stderr, " to view the available themes.")?;
+        write!(tc_stderr, "'\nUse ")?;
+        tc_stderr.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
+        write!(tc_stderr, "-l")?;
+        tc_stderr.reset()?;
+        write!(tc_stderr, "/")?;
+        tc_stderr.set_color(ColorSpec::new().set_fg(Some(Color::Green)))?;
+        write!(tc_stderr, "--list-themes")?;
+        tc_stderr.reset()?;
+        writeln!(tc_stderr, " to view the available themes.")?;
 
-        stderr.flush()?;
+        tc_stderr.flush()?;
 
-        std::process::exit(1);
+        return Ok(());
     };
 
     let path = {
@@ -162,10 +176,41 @@ monokai-soda"
                     ),
                     config,
                 ),
+                // TODO isn't this problematic?
+                // if there isn't a config, or it couldn't be parsed,
+                // it should just be overwritten with CLI args right?
                 None => Config::default(),
             }
         }
     )?;
+
+    if args.tui {
+        let stdout = io::stdout().into_raw_mode()?;
+        let backend = TermionBackend::new(stdout);
+        let mut terminal = Terminal::new(backend)?;
+
+        let mut events = Events::new();
+
+        loop {
+            terminal.draw(|f| {
+                let chunks = Layout::default()
+                    .direction(Direction::Vertical)
+                    .margin(2)
+                    .constraints(
+                        [
+                            Constraint::Percentage(10),
+                            Constraint::Percentage(80),
+                            Constraint::Percentage(10),
+                        ]
+                        .as_ref(),
+                    )
+                    .split(f.size());
+
+                let block = Block::default().title("Color themes").borders(Borders::ALL);
+                f.render_widget(block, chunks[0]);
+            })?;
+        }
+    }
 
     Ok(())
 }

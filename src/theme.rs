@@ -502,6 +502,7 @@ window:
 
 #[derive(Debug)]
 pub enum WindowSizeParseError {
+    // TODO correct tihs error message, this isn't what necessarily happens
     TooManyXs,
     IntParse(
         // index (0 | 1), which integer failed to parse

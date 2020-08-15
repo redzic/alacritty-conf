@@ -79,8 +79,8 @@ if __name__ == "__main__":
         print(
             "black: RGB8::new{},".format(
                 hex_to_rgb_tuple(parsed["colors"]["bright"]["black"])
-            )
         )
+        
         print(
             "red: RGB8::new{},".format(
                 hex_to_rgb_tuple(parsed["colors"]["bright"]["red"])
